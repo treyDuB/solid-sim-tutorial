@@ -3,12 +3,18 @@ import os
 
 def generate(side_length, n_seg):
     # sample nodes uniformly on a square
-    x = np.array([[0.0, 0.0]] * ((n_seg + 1) ** 2))
+    x = np.array([[0.0, 0.0]] * ((n_seg + 1) ** 2 + n_seg * n_seg))
     step = side_length / n_seg
     for i in range(0, n_seg + 1):
         for j in range(0, n_seg + 1):
             x[i * (n_seg + 1) + j] = [-side_length / 2 + i * step, -side_length / 2 + j * step]
-    
+
+    # sample center of squares
+    center_start = (n_seg + 1) * (n_seg + 1)
+    for i in range(0, n_seg):
+        for j in range(0, n_seg):
+            x[center_start + (i * n_seg)+j] = [-side_length / 2 + (i + 0.5) * step, -side_length / 2 + (j + 0.5) * step]
+
     # connect the nodes with edges
     e = []
     # horizontal edges
@@ -22,8 +28,11 @@ def generate(side_length, n_seg):
     # diagonals
     for i in range(0, n_seg):
         for j in range(0, n_seg):
-            e.append([i * (n_seg + 1) + j, (i + 1) * (n_seg + 1) + j + 1])
-            e.append([(i + 1) * (n_seg + 1) + j, i * (n_seg + 1) + j + 1])
+            center_idx = center_start + (i * n_seg) + j
+            e.append([i * (n_seg + 1) + j, center_idx])
+            e.append([center_idx, (i + 1) * (n_seg + 1) + j + 1])
+            e.append([(i + 1) * (n_seg + 1) + j, center_idx])
+            e.append([center_idx, i * (n_seg + 1) + j + 1])
 
     return [x, e]
 
@@ -37,7 +46,7 @@ def write_to_file(frameNum, x, n_seg):
     with open(filename, 'w') as f:
         # write vertex coordinates
         for row in x:
-            f.write(f"v {float(row[0]):.6f} {float(row[1]):.6f} 0.0\n") 
+            f.write(f"v {float(row[0]):.6f} {float(row[1]):.6f} 0.0\n")
         # write vertex indices for each triangle
         for i in range(0, n_seg):
             for j in range(0, n_seg):
