@@ -13,7 +13,7 @@ import BarrierEnergy
 
 def step_forward(x, e, v, m, l2, k, y_ground, contact_area, is_DBC, h, tol, P = None, a_L = None, P2 = None, e_L = [], l2_L = [], k_L = []):
     x_tilde = x + v * h     # implicit Euler predictive position
-    # TODO add progressive advancement  
+    # TODO add progressive advancement
     x_n = copy.deepcopy(x)
     x_L = [] if P == None else np.column_stack([P @ x[:,0], P @ x[:,1]]) + a_L
     # Newton loop
@@ -36,6 +36,7 @@ def step_forward(x, e, v, m, l2, k, y_ground, contact_area, is_DBC, h, tol, P = 
         # print('step size =', alpha)
 
         x += alpha * p
+        x_L = [] if P == None else np.column_stack([P @ x[:,0], P @ x[:,1]]) + a_L
         E_last = IP_val(x, e, x_tilde, m, l2, k, y_ground, contact_area, h, x_L, e_L, l2_L, k_L)
         p = search_dir(x, e, x_tilde, m, l2, k, y_ground, contact_area, is_DBC, h, P, P2, x_L, e_L, l2_L, k_L)
         iter += 1

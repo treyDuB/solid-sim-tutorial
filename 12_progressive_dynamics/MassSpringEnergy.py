@@ -2,7 +2,7 @@ import numpy as np
 import utils
 import scipy.sparse as sparse
 
-
+# Mass-Spring energy
 def val(x, e, l2, k):
     sum = 0.0
     for i in range(0, len(e)):

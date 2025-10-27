@@ -115,9 +115,11 @@ def check_projection(P, a, x_0, x_1, eps=1e-6):
 
 
 
-def write_to_file(frameNum, x, n_seg, level = 0):
+def write_to_file(frameNum, x, n_seg, level = 0, big_L = 0):
     # Check if 'output_{level}' directory exists; if not, create it
     output = f"output/sim_{level}"
+    if(big_L != 0):
+        output = f"output/sim_{level}_{big_L}"
     if not os.path.exists(output):
         os.makedirs(output)
 
@@ -134,10 +136,12 @@ def write_to_file(frameNum, x, n_seg, level = 0):
                 f.write(f"f {i * (n_seg+1) + j + 1} {(i+1) * (n_seg+1) + j + 1} {(i+1) * (n_seg+1) + j+1 + 1}\n")
                 f.write(f"f {i * (n_seg+1) + j + 1} {(i+1) * (n_seg+1) + j+1 + 1} {i * (n_seg+1) + j+1 + 1}\n")
 
-def read_from_file(frameNum, num_nodes, level = 0):
+def read_from_file(frameNum, num_nodes, level = 0, big_L = 0):
     #read vertices out
     vertices = np.array([[0.0, 0.0]] * (num_nodes))
     output = f"output/sim_{level}"
+    if( big_L != 0):
+        output = f"output/sim_{level}_{big_L}"
     filename = f"{output}/{frameNum}.obj"
     i = 0
     with open(filename, "r") as f:

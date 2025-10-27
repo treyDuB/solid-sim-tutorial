@@ -167,7 +167,7 @@ def screen_projection(x):
 
 time_step = 0
 end_time = 300
-square_mesh.write_to_file(time_step, x, n_seg, level)
+square_mesh.write_to_file(time_step, x, n_seg, level, big_L)
 screen = pygame.display.set_mode(resolution)
 running = True
 
@@ -211,7 +211,7 @@ while running and time_step < end_time:
     iter_sum += iter
     time_step += 1
     pygame.time.wait(int(h * 1000))
-    square_mesh.write_to_file(time_step, x, n_seg, level)
+    square_mesh.write_to_file(time_step, x, n_seg, level, big_L)
 
 # Save time
 duration = time.time() - start
@@ -233,7 +233,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
     #read position x
-    x = square_mesh.read_from_file(time_step, num_nodes, level)
+    x = square_mesh.read_from_file(time_step, num_nodes, level, big_L)
 
     x_L = x
     if(level == 0 and big_L >=1):
