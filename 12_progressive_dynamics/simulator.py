@@ -166,7 +166,7 @@ def screen_projection(x):
     return [offset[0] + scale * x[0], resolution[1] - (offset[1] + scale * x[1])]
 
 time_step = 0
-end_time = 300
+end_time = 200
 square_mesh.write_to_file(time_step, x, n_seg, level, big_L)
 screen = pygame.display.set_mode(resolution)
 running = True
@@ -189,7 +189,7 @@ while running and time_step < end_time:
             if pygame.key == 'p':
                 running = False
 
-    print('### Time step', time_step, '###')
+    # print('### Time step', time_step, '###')
 
     # fill the background and draw the square
     screen.fill((255, 255, 255))
@@ -206,7 +206,7 @@ while running and time_step < end_time:
     pygame.display.flip()   # flip the display
 
     # step forward simulation and wait for screen refresh
-    [x, v, iter] = time_integrator.step_forward(x, e, v, m, l2, k, y_ground, contact_area, is_DBC, h, 1e-2, P, a_L, P2, e_L, l2_L, k_L)
+    [x, v, iter] = time_integrator.step_forward(x, None, e, v, m, l2, k, y_ground, contact_area, is_DBC, h, 1e-2, P, a_L, P2, e_L, l2_L, k_L)
     max_iter = max(max_iter, iter)
     iter_sum += iter
     time_step += 1
@@ -223,38 +223,105 @@ print(' max iter = ', max_iter, ' avg iter = ', iter_sum / (time_step + 1))
 end_time = time_step
 time_step = 0
 
+while level < big_L:
+    time_step = 0
+    max_iter = 0
+    iter_sum = 0
+    start = time.time()
+    level += 1
+    print(f"Progressing to level {level}")
+    # update simulation variables to next level
+    x = x_0 if level == 0 else (x_1 if level == 1 else x_2)
+    e = e_0 if level == 0 else (e_1 if level == 1 else e_2)
+    prev_num_nodes = num_nodes
+    num_nodes = len(x)
+    v = np.array([[0.0, 0.0]] * num_nodes)             # velocity
+    m = m_0 if level == 0 else (m_1 if level == 1 else m_2)
+    l2 = l2_0 if level == 0 else (l2_1 if level == 1 else l2_2)
+    k = k_0 if level == 0 else (k_1 if level == 1 else k_2)
+    is_DBC = is_DBC_0 if level == 0 else (is_DBC_1 if level == 1 else is_DBC_2)
+    contact_area = contact_area_0 if level == 0 else (contact_area_1 if level == 1 else contact_area_2)
+    P = P_0 if level == 0 else (P_1 if level == 1 else None)
+    P2 = None if P == None else utils.expand_elementwise_projection(P)
+    a_L = None
+    if level == 0:
+        if big_L == 1:
+            a_L = a_0_1
+        if big_L == 2:
+            a_L = a_0_2
+    if level == 1 and big_L == 2:
+        a_L = a_1_2
+    prev_P = None
+    prev_P = P_0_1 if level == 1 else (P_1_2 if level == 2 else None)
+    # Solve next level
+    while running and time_step < end_time:
+        # run until the user asks to quit
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if pygame.key == 'p':
+                    running = False
+
+        # print('### Time step', time_step, '###')
+
+        # fill the background and draw the square
+        screen.fill((255, 255, 255))
+        pygame.draw.aaline(screen, (0, 0, 255), screen_projection([-2, y_ground]), screen_projection([2, y_ground]))   # ground
+        for eI in e:
+            pygame.draw.aaline(screen, (0, 0, 255), screen_projection(x[eI[0]]), screen_projection(x[eI[1]]))
+        for i in range(len(x)):
+            xI = x[i]
+            if is_DBC[i]:
+                pygame.draw.circle(screen, (255, 0, 0), screen_projection(xI), 0.12 * side_len / n_seg * scale)
+            else:
+                pygame.draw.circle(screen, (0, 0, 255), screen_projection(xI), 0.1 * side_len / n_seg * scale)
+
+        pygame.display.flip()   # flip the display
+
+        #calculate projected position and velocity
+        x_hat = None
+        if(time_step < end_time - 1):
+            prev_x_l = square_mesh.read_from_file(time_step, prev_num_nodes, level - 1, big_L)
+            this_x_l = square_mesh.read_from_file(time_step+1, prev_num_nodes, level - 1, big_L)
+            diff_x_l = (this_x_l - prev_x_l)
+            x_hat = x + np.column_stack([prev_P @ diff_x_l[:,0], prev_P @ diff_x_l[:,1]])
+
+
+
+        # step forward simulation and wait for screen refresh
+        [x, v, iter] = time_integrator.step_forward(x, x_hat, e, v, m, l2, k, y_ground, contact_area, is_DBC, h, 1e-2, P, a_L, P2, e_L, l2_L, k_L)
+        max_iter = max(max_iter, iter)
+        iter_sum += iter
+        time_step += 1
+        square_mesh.write_to_file(time_step, x, n_seg, level, big_L)
+    duration = time.time() - start
+    print(f"Completed level {level} in {duration:.2f}s")
+    print(' max iter = ', max_iter, ' avg iter = ', iter_sum / (time_step + 1))
+
 
 
 # print('### Replay Simulation ###')
-
+time_step = 0
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
     #read position x
-    x = square_mesh.read_from_file(time_step, num_nodes, level, big_L)
-
-    x_L = x
-    if(level == 0 and big_L >=1):
-        x_L = np.column_stack([P_0 @ x[:,0], P_0 @ x[:,1]])
-        if big_L == 1:
-            x_L += a_0_1
-        if big_L == 2:
-            x_L += a_0_2
-    if(level == 1 and big_L ==2):
-        x_L = np.column_stack([P_1 @ x[:,0], P_1 @ x[:,1]]) + a_1_2
+    x = square_mesh.read_from_file(time_step, num_nodes, big_L, big_L)
 
 
     # print('### replaying step', time_step, '###')
+
     # fill the background and draw the square
     screen.fill((255, 255, 255))
     pygame.draw.aaline(screen, (0, 0, 255), screen_projection([-2, y_ground]), screen_projection([2, y_ground]))   # ground
     for eI in e_L:
-        pygame.draw.aaline(screen, (0, 0, 255), screen_projection(x_L[eI[0]]), screen_projection(x_L[eI[1]]))
-    for i in range(len(x_L)):
-        xI = x_L[i]
-        if is_DBC_L[i]:
+        pygame.draw.aaline(screen, (0, 0, 255), screen_projection(x[eI[0]]), screen_projection(x[eI[1]]))
+    for i in range(len(x)):
+        xI = x[i]
+        if is_DBC[i]:
             pygame.draw.circle(screen, (255, 0, 0), screen_projection(xI), 0.12 * side_len / n_seg * scale)
         else:
             pygame.draw.circle(screen, (0, 0, 255), screen_projection(xI), 0.1 * side_len / n_seg * scale)

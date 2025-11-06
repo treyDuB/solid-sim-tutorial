@@ -11,8 +11,11 @@ import MassSpringEnergy
 import GravityEnergy
 import BarrierEnergy
 
-def step_forward(x, e, v, m, l2, k, y_ground, contact_area, is_DBC, h, tol, P = None, a_L = None, P2 = None, e_L = [], l2_L = [], k_L = []):
+def step_forward(x, x_hat, e, v, m, l2, k, y_ground, contact_area, is_DBC, h, tol, P = None, a_L = None, P2 = None, e_L = [], l2_L = [], k_L = []):
     x_tilde = x + v * h     # implicit Euler predictive position
+    if x_hat is not None:
+        x_tilde = x_hat     # override with external prediction
+
     # TODO add progressive advancement
     x_n = copy.deepcopy(x)
     x_L = [] if P == None else np.column_stack([P @ x[:,0], P @ x[:,1]]) + a_L
@@ -40,7 +43,7 @@ def step_forward(x, e, v, m, l2, k, y_ground, contact_area, is_DBC, h, tol, P = 
         E_last = IP_val(x, e, x_tilde, m, l2, k, y_ground, contact_area, h, x_L, e_L, l2_L, k_L)
         p = search_dir(x, e, x_tilde, m, l2, k, y_ground, contact_area, is_DBC, h, P, P2, x_L, e_L, l2_L, k_L)
         iter += 1
-    if iter > 1: print('Took', iter, ' iterations')
+    # if iter > 1: print('Took', iter, ' iterations')
     v = (x - x_n) / h   # implicit Euler velocity update
     return [x, v, iter]
 
