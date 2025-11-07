@@ -18,7 +18,7 @@ def val(x, n, o, bp, be, contact_area):
             s = d / dhat
             sum += contact_area[i] * dhat * kappa / 2 * (s - 1) * math.log(s)
     # ceil:
-    n = np.array([0.0, -1.0])
+    n = np.array([0.0,  -1.0])
     for i in range(0, len(x) - 1):
         d = n.dot(x[i] - x[-1])
         if d < dhat:
