@@ -14,8 +14,12 @@ def generate(side_length, n_seg, height=0.0):
     # horizontal edges
     for i in range(0, n_seg):
         e.append([i, (i + 1)])
+    # add joints
+    elem = np.array([[0,0,0]] * (n_seg-1))
+    for i in range(0, n_seg-1):
+        elem[i] = [i, (i + 1), (i + 2)]
 
-    return [x, e]
+    return [x, e, elem]
 
 def write_to_file(frameNum, x):
     # Check if 'output' directory exists; if not, create it
