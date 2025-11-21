@@ -3,8 +3,8 @@ import math
 import numpy as np
 import utils
 
-stiff = 100
-thickness = 0.1
+stiff = 1000
+thickness = 0.2
 pi = 3.14159
 
 
@@ -21,7 +21,6 @@ def val(x, elems, length):
         alpha = stiff * math.pow(thickness,3) /16.0
         kappa = (e0[0] * e1[1] - e0[1] * e1[0]) * 2.0 / math.sqrt(np.linalg.norm(e0) * np.linalg.norm(e1)) + e0.dot(e1)
         sum += alpha * kappa * kappa / length[i]
-
     return sum
 
 def grad(x, elems, length):
@@ -37,7 +36,7 @@ def grad(x, elems, length):
 
         for local_idx in range(3):
             for d in range(2):
-                g[vertices[local_idx]][d] += g_kappa2[local_idx * 2 + d]
+                g[vertices[local_idx]][d] += weight * g_kappa2[local_idx * 2 + d]
     return g
 
 def hess(x, elems, length):
