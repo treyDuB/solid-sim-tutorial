@@ -16,7 +16,6 @@ def step_forward(x, x_hat, e, v, m, l2, k, y_ground, contact_area, is_DBC, h, to
     if x_hat is not None:
         x_tilde = x_hat     # override with external prediction
 
-    # TODO add progressive advancement
     x_n = copy.deepcopy(x)
     x_L = [] if P == None else np.column_stack([P @ x[:,0], P @ x[:,1]]) + a_L
     # Newton loop

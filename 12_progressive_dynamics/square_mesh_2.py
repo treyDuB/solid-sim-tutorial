@@ -65,6 +65,8 @@ def make_projection(x_0, x_1, e_1, eps=1e-6):
             neighbors[b].add(direct[a])
         elif direct[b] is not None:
             neighbors[a].add(direct[b])
+        else:
+            print("Nothing to project from \n")
     # Add projection of neighbors or direct mapping
     for i in range(num_nodes_1):
         if direct[i] is not None:
